@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sotalia Sightings — Bocas del Toro</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <style>
+    /* ── Reset & base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0d1117;
+      --surface:  #161b22;
+      --surface2: #21262d;
+      --border:   #30363d;
+      --text:     #e6edf3;
+      --muted:    #8b949e;
+      --accent:   #58a6ff;
+
+      /* Species */
+      --msg: #3fb950;
+      --sg:  #58a6ff;
+      --tt:  #f78166;
+      --mix: #d2a8ff;
+
+      /* Calves */
+      --cyes: #ffa657;
+      --cno:  #6e7681;
+      --cunk: #8b949e;
+
+      /* Behavior */
+      --travel:   #58a6ff;
+      --social:   #d2a8ff;
+      --foraging: #3fb950;
+      --resting:  #ffa657;
+      --diving:   #f78166;
+      --unknown:  #6e7681;
+    }
+
+    html, body { height: 100%; font-family: 'IBM Plex Sans', sans-serif; background: var(--bg); color: var(--text); }
+    #app { display: flex; flex-direction: column; height: 100vh; }
+
+    /* ── Header ───────────────────────────────────────────────── */
+    header {
+      padding: 12px 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    }
+    .title-block { display: flex; align-items: baseline; gap: 10px; }
+    .title-block h1 {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 14px; font-weight: 500; letter-spacing: -0.02em; color: var(--text);
+    }
+    .title-block .sub { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--muted); }
+
+    .stats { display: flex; gap: 24px; }
+    .stat-item { text-align: right; }
+    .stat-item .val { font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 500; line-height: 1; }
+    .stat-item .lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-top: 1px; }
+
+    /* ── Control bar ──────────────────────────────────────────── */
+    #controls {
+      padding: 9px 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+    }
+    .ctrl-row { display: flex; align-items: center; gap: 8px; }
+    .ctrl-lbl {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted);
+      white-space: nowrap;
+    }
+
+    /* mode toggle */
+    .mode-btn {
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+      padding: 4px 11px; border-radius: 4px;
+      border: 1px solid var(--border); background: transparent; color: var(--muted);
+      cursor: pointer; transition: all 0.14s;
+    }
+    .mode-btn:hover { border-color: var(--accent); color: var(--text); }
+    .mode-btn.on { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 500; }
+
+    /* filter pills */
+    .pill {
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+      padding: 3px 10px; border-radius: 20px; border: 1px solid;
+      background: transparent; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 5px;
+      transition: opacity 0.14s;
+    }
+    .pill .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .pill.off { opacity: 0.28; }
+
+    .sep { width: 1px; height: 20px; background: var(--border); flex-shrink: 0; }
+
+    /* ── Map area ─────────────────────────────────────────────── */
+    #map-wrap { flex: 1; position: relative; }
+    #map      { width: 100%; height: 100%; }
+
+    /* darken tiles for contrast */
+    .leaflet-tile { filter: brightness(0.52) saturate(0.35); }
+
+    /* ── Counter badge ────────────────────────────────────────── */
+    #badge {
+      position: absolute; top: 12px; left: 12px; z-index: 1000;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+      padding: 5px 12px;
+      font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--muted);
+    }
+    #badge b { color: var(--text); font-weight: 500; }
+
+    /* ── Legend ───────────────────────────────────────────────── */
+    #legend {
+      position: absolute; bottom: 28px; right: 12px; z-index: 1000;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+      padding: 14px 16px; min-width: 170px; pointer-events: none;
+    }
+    .leg-section-title {
+      font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+      text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted);
+      margin-bottom: 7px;
+    }
+    .leg-row { display: flex; align-items: center; gap: 8px; font-size: 11px; margin-bottom: 5px; color: var(--text); }
+    .leg-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .leg-hr  { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
+    .leg-sizes { display: flex; align-items: flex-end; gap: 10px; margin-top: 4px; }
+    .leg-sz { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .leg-sz .lbl { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); }
+    .leg-sz .circ { background: var(--muted); border-radius: 50%; opacity: 0.55; }
+
+    /* ── Popup ────────────────────────────────────────────────── */
+    .leaflet-popup-content-wrapper {
+      background: var(--surface2) !important;
+      border: 1px solid var(--border) !important;
+      border-radius: 6px !important;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.55) !important;
+      color: var(--text) !important;
+    }
+    .leaflet-popup-tip { background: var(--surface2) !important; }
+    .leaflet-popup-content { margin: 14px 16px !important; min-width: 190px; }
+
+    .pop-title { font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+    .pop-badge {
+      display: inline-block; padding: 2px 8px; border-radius: 3px;
+      font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 500;
+      margin-bottom: 9px;
+    }
+    .pop-row {
+      display: flex; justify-content: space-between; gap: 14px;
+      font-size: 12px; padding: 3px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .pop-row:last-child { border-bottom: none; }
+    .pop-k { color: var(--muted); }
+    .pop-v { font-family: 'IBM Plex Mono', monospace; }
+
+    /* ── Loading overlay ──────────────────────────────────────── */
+    #loading {
+      position: absolute; inset: 0; z-index: 2000;
+      background: var(--bg);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+    }
+    #loading p { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--muted); letter-spacing: 0.04em; }
+    .spinner {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 2px solid var(--border); border-top-color: var(--accent);
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── Header ── -->
+  <header>
+    <div class="title-block">
+      <h1>Sotalia sightings</h1>
+      <span class="sub">Bocas del Toro &middot; 2003&ndash;2006</span>
+    </div>
+    <div class="stats">
+      <div class="stat-item"><div class="val" id="s-n">—</div><div class="lbl">sightings</div></div>
+      <div class="stat-item"><div class="val" id="s-avg">—</div><div class="lbl">avg group</div></div>
+      <div class="stat-item"><div class="val" id="s-calves">—</div><div class="lbl">with calves</div></div>
+    </div>
+  </header>
+
+  <!-- ── Controls ── -->
+  <div id="controls">
+
+    <!-- color mode -->
+    <div class="ctrl-row">
+      <span class="ctrl-lbl">Color by</span>
+      <button class="mode-btn on"  data-mode="species">Species</button>
+      <button class="mode-btn"     data-mode="calves">Calves</button>
+      <button class="mode-btn"     data-mode="behavior">Behavior</button>
+    </div>
+
+    <div class="sep"></div>
+
+    <!-- species filter (populated from data) -->
+    <div class="ctrl-row" id="sp-filters">
+      <span class="ctrl-lbl">Species</span>
+    </div>
+
+    <div class="sep"></div>
+
+    <!-- behavior filter (populated from data) -->
+    <div class="ctrl-row" id="bh-filters">
+      <span class="ctrl-lbl">Behavior</span>
+    </div>
+
+  </div>
+
+  <!-- ── Map ── -->
+  <div id="map-wrap">
+    <div id="loading"><div class="spinner"></div><p>loading data.csv …</p></div>
+    <div id="map"></div>
+    <div id="badge">Showing <b id="vis-n">—</b> sightings</div>
+    <div id="legend">
+      <div class="leg-section-title" id="leg-title">Species</div>
+      <div id="leg-items"></div>
+      <div class="leg-hr"></div>
+      <div class="leg-section-title">Group size</div>
+      <div class="leg-sizes" id="leg-sizes"></div>
+    </div>
+  </div>
+
+</div><!-- #app -->
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  /* ── Color palette ─────────────────────────────────────────── */
+  const PALETTE = {
+    species:  { MSG:'#3fb950', SG:'#58a6ff', TT:'#f78166', Mixed:'#d2a8ff' },
+    calves:   { Yes:'#ffa657', No:'#6e7681', Unknown:'#8b949e' },
+    behavior: { Travel:'#58a6ff', Social:'#d2a8ff', Foraging:'#3fb950',
+                Resting:'#ffa657', Diving:'#f78166', unknown:'#6e7681' }
+  };
+
+  const LABELS = {
+    species:  { MSG:'MSG — S. guianensis', SG:'SG — S. fluviatilis',
+                TT:'TT — T. truncatus',   Mixed:'Mixed species' },
+    calves:   { Yes:'Calves present', No:'No calves', Unknown:'Unknown' },
+    behavior: { Travel:'Travel', Social:'Social', Foraging:'Foraging',
+                Resting:'Resting', Diving:'Diving', unknown:'Unknown' }
+  };
+
+  /* ── State ─────────────────────────────────────────────────── */
+  let DATA      = [];
+  let colorMode = 'species';
+  let GS_MIN    = 2;
+  let GS_MAX    = 40;
+  const active  = { species: new Set(), behavior: new Set() };
+
+  /* ── Helpers ───────────────────────────────────────────────── */
+  function radius(gs) {
+    return 5 + ((gs - GS_MIN) / (GS_MAX - GS_MIN)) * 17;
+  }
+
+  function colorOf(d) {
+    const key = colorMode === 'species'  ? d.species
+              : colorMode === 'calves'   ? d.calves
+              :                            d.behavior;
+    return PALETTE[colorMode][key] || '#888';
+  }
+
+  function visible(d) {
+    return active.species.has(d.species) && active.behavior.has(d.behavior);
+  }
+
+  /* ── Map setup ─────────────────────────────────────────────── */
+  const map   = L.map('map', { zoomControl: false });
+  const layer = L.layerGroup().addTo(map);
+  L.control.zoom({ position: 'bottomleft' }).addTo(map);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
+    maxZoom: 18
+  }).addTo(map);
+
+  /* ── Render ────────────────────────────────────────────────── */
+  function render() {
+    layer.clearLayers();
+    const vis = DATA.filter(visible);
+
+    vis.forEach(d => {
+      const col = colorOf(d);
+      const m   = L.circleMarker([d.lat, d.lng], {
+        radius:      radius(d.gs),
+        fillColor:   col,
+        color:       col,
+        weight:      1.5,
+        opacity:     0.9,
+        fillOpacity: 0.58
+      });
+      m.bindPopup(popup(d), { maxWidth: 240 });
+      layer.addLayer(m);
+    });
+
+    const n   = vis.length;
+    const avg = n ? (vis.reduce((s, d) => s + d.gs, 0) / n).toFixed(1) : '—';
+    const cal = vis.filter(d => d.calves === 'Yes').length;
+
+    document.getElementById('vis-n').textContent   = n;
+    document.getElementById('s-n').textContent     = n;
+    document.getElementById('s-avg').textContent   = avg;
+    document.getElementById('s-calves').textContent = cal;
+
+    renderLegend(vis);
+  }
+
+  function popup(d) {
+    const col = colorOf(d);
+    return `
+      <div class="pop-title">${d.species} &middot; ${d.date}</div>
+      <span class="pop-badge" style="background:${col}1f;color:${col}">${d.behavior}</span>
+      <div class="pop-row"><span class="pop-k">Group size</span><span class="pop-v">${d.gs}</span></div>
+      <div class="pop-row"><span class="pop-k">Calves</span><span class="pop-v">${d.calves}</span></div>
+      <div class="pop-row"><span class="pop-k">Date</span><span class="pop-v">${d.date}</span></div>
+      <div class="pop-row"><span class="pop-k">Lat / Lon</span><span class="pop-v">${d.lat.toFixed(4)}, ${d.lng.toFixed(4)}</span></div>
+    `;
+  }
+
+  function renderLegend(vis) {
+    const pal    = PALETTE[colorMode];
+    const labs   = LABELS[colorMode];
+    const present = new Set(vis.map(d =>
+      colorMode === 'species'  ? d.species
+    : colorMode === 'calves'   ? d.calves
+    :                            d.behavior
+    ));
+
+    document.getElementById('leg-title').textContent = {
+      species:'Species', calves:'Calf presence', behavior:'Behavior'
+    }[colorMode];
+
+    document.getElementById('leg-items').innerHTML =
+      Object.entries(labs)
+        .filter(([k]) => present.has(k))
+        .map(([k, label]) =>
+          `<div class="leg-row">
+             <span class="leg-dot" style="background:${pal[k]}"></span>
+             <span>${label}</span>
+           </div>`
+        ).join('');
+
+    const steps = [GS_MIN, Math.round((GS_MIN + GS_MAX) / 2), GS_MAX];
+    document.getElementById('leg-sizes').innerHTML = steps.map(gs => {
+      const px = radius(gs) * 2;
+      return `<div class="leg-sz">
+                <div class="circ" style="width:${px}px;height:${px}px"></div>
+                <span class="lbl">${gs}</span>
+              </div>`;
+    }).join('');
+  }
+
+  /* ── Filter pills ──────────────────────────────────────────── */
+  function makePill(container, group, val, color) {
+    const btn = document.createElement('button');
+    btn.className = 'pill';
+    btn.dataset.group = group;
+    btn.dataset.val   = val;
+    btn.style.color       = color;
+    btn.style.borderColor = color;
+    btn.innerHTML = `<span class="dot" style="background:${color}"></span>${val}`;
+    btn.addEventListener('click', () => {
+      const set = active[group];
+      if (set.has(val)) {
+        if (set.size === 1) return;   // keep at least one active
+        set.delete(val);
+        btn.classList.add('off');
+      } else {
+        set.add(val);
+        btn.classList.remove('off');
+      }
+      render();
+    });
+    container.appendChild(btn);
+  }
+
+  function buildPills() {
+    const spEl = document.getElementById('sp-filters');
+    const bhEl = document.getElementById('bh-filters');
+
+    [...active.species].sort().forEach(sp =>
+      makePill(spEl, 'species', sp, PALETTE.species[sp] || '#888')
+    );
+    [...active.behavior].sort().forEach(bh =>
+      makePill(bhEl, 'behavior', bh, PALETTE.behavior[bh] || '#888')
+    );
+  }
+
+  /* ── Mode toggle ───────────────────────────────────────────── */
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+      colorMode = btn.dataset.mode;
+      render();
+    });
+  });
+
+  /* ── CSV parser ────────────────────────────────────────────── */
+  function parseCSV(text) {
+    const lines   = text.trim().split('\n');
+    const headers = lines[0].split(',').map(h => h.trim());
+    return lines.slice(1).map(line => {
+      const cols = line.split(',');
+      return Object.fromEntries(headers.map((h, i) => [h, (cols[i] ?? '').trim()]));
+    });
+  }
+
+  /* ── Boot: fetch data.csv ──────────────────────────────────── */
+  fetch('data.csv')
+    .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.text(); })
+    .then(text => {
+      const raw = parseCSV(text);
+
+      DATA = raw.map(r => ({
+        lat:     parseFloat(r.Lat),
+        lng:     parseFloat(r.Long),
+        date:    r.date,
+        species: r.species,
+        gs:      parseInt(r.group_size, 10),
+        behavior:r.behavior,
+        calves:  r.calves
+      })).filter(d => !isNaN(d.lat) && !isNaN(d.lng));
+
+      GS_MIN = Math.min(...DATA.map(d => d.gs));
+      GS_MAX = Math.max(...DATA.map(d => d.gs));
+
+      DATA.forEach(d => {
+        active.species.add(d.species);
+        active.behavior.add(d.behavior);
+      });
+
+      buildPills();
+      map.fitBounds(DATA.map(d => [d.lat, d.lng]), { padding: [32, 32] });
+      document.getElementById('loading').style.display = 'none';
+      render();
+    })
+    .catch(err => {
+      const el = document.getElementById('loading');
+      el.querySelector('div').style.display = 'none';
+      el.querySelector('p').textContent = `Could not load data.csv — ${err.message}`;
+    });
+</script>
+</body>
+</html>
