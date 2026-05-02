@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<!-- saved from url=(0054)file:///C:/Users/lmaycoll/Downloads/sotalia_map_3.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sotalia — Gandoca-Manzanillo Sightings</title>
+<link rel="stylesheet" href="./Sotalia — Gandoca-Manzanillo Sightings_files/leaflet.min.css">
+<script src="./Sotalia — Gandoca-Manzanillo Sightings_files/leaflet.min.js.download"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link href="./Sotalia — Gandoca-Manzanillo Sightings_files/css2" rel="stylesheet">
+
+<style>
+/* ── Base ─────────────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:#F7F4EF;color:#26201A}
+#app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+/* ── Header ───────────────────────────────────────────────────── */
+#hdr{
+  background:#F7F4EF;border-bottom:1.5px solid #DDD5C8;
+  padding:0 18px;height:48px;display:flex;align-items:center;
+  gap:12px;flex-shrink:0;z-index:600;
+}
+#hdr h1{
+  font-family:'DM Serif Display',serif;font-size:1.1rem;
+  font-weight:400;white-space:nowrap;color:#26201A;
+}
+#hdr h1 em{font-style:italic;color:#1E5C3A}
+.hdr-sep{width:1.5px;height:24px;background:#DDD5C8;flex-shrink:0}
+.hdr-sub{font-size:0.73rem;color:#7A6E62;white-space:nowrap}
+.hdr-count{
+  margin-left:auto;font-size:0.78rem;font-weight:500;color:#26201A;
+  white-space:nowrap;display:flex;align-items:center;gap:6px;
+}
+.hdr-count span{color:#7A6E62;font-weight:400}
+#vis-badge{
+  background:#1E5C3A;color:#fff;font-size:0.72rem;font-weight:600;
+  padding:2px 9px;border-radius:999px;
+}
+
+/* ── Filter bar ───────────────────────────────────────────────── */
+#filters{
+  background:#F0EDE7;border-bottom:1.5px solid #DDD5C8;
+  padding:7px 18px;display:flex;align-items:center;
+  gap:0;flex-shrink:0;flex-wrap:wrap;row-gap:6px;
+}
+
+.fgroup{
+  display:flex;align-items:center;gap:6px;
+  padding-right:14px;margin-right:14px;
+  border-right:1.5px solid #DDD5C8;
+}
+.fgroup:last-child{border-right:none;padding-right:0;margin-right:0}
+
+.fgroup-label{
+  font-size:0.62rem;font-weight:600;text-transform:uppercase;
+  letter-spacing:0.1em;color:#7A6E62;white-space:nowrap;margin-right:2px;
+}
+
+.toggle-row{display:flex;gap:4px;flex-wrap:wrap}
+
+/* individual toggle pill */
+.tog{
+  display:flex;align-items:center;gap:5px;
+  padding:4px 10px;border-radius:999px;
+  border:1.5px solid transparent;
+  cursor:pointer;font-size:0.76rem;font-weight:500;
+  font-family:'DM Sans',sans-serif;
+  transition:all .15s ease;white-space:nowrap;
+  user-select:none;
+}
+.tog .dot{
+  width:8px;height:8px;border-radius:50%;
+  flex-shrink:0;transition:transform .15s;
+}
+/* active state set per-class via JS inline style */
+.tog.off{
+  background:#F7F4EF!important;
+  border-color:#C8BFB0!important;
+  color:#9A9080!important;
+  opacity:0.65;
+}
+.tog.off .dot{opacity:0.35}
+
+/* reset link */
+.reset-btn{
+  margin-left:6px;font-size:0.68rem;color:#7A6E62;
+  text-decoration:underline;cursor:pointer;white-space:nowrap;
+  background:none;border:none;font-family:'DM Sans',sans-serif;
+  padding:0;
+}
+.reset-btn:hover{color:#1E5C3A}
+
+/* ── Map ──────────────────────────────────────────────────────── */
+#map{flex:1;z-index:1}
+
+/* ── Legend (Leaflet control) ─────────────────────────────────── */
+.lgd{
+  background:#F7F4EF;border:1.5px solid #DDD5C8;border-radius:12px;
+  padding:12px 14px;min-width:172px;
+  box-shadow:0 4px 18px rgba(38,32,26,.09);
+  font-family:'DM Sans',sans-serif;
+}
+.lgd-ttl{
+  font-size:.6rem;font-weight:600;text-transform:uppercase;
+  letter-spacing:.12em;color:#7A6E62;
+  margin-bottom:7px;padding-bottom:5px;
+  border-bottom:1px solid #DDD5C8;
+}
+.lgd-row{display:flex;align-items:center;gap:7px;margin-bottom:4px}
+.lgd-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;border:1.5px solid rgba(0,0,0,.1)}
+.lgd-lbl{font-size:.73rem;color:#26201A;line-height:1.2;flex:1}
+.lgd-n{font-size:.65rem;color:#7A6E62;font-weight:500}
+.lgd-sep{height:1px;background:#DDD5C8;margin:8px 0}
+.sz-row{display:flex;align-items:flex-end;gap:6px;margin-top:4px}
+.sz-b{
+  background:rgba(38,32,26,.1);
+  border:1.5px solid rgba(38,32,26,.25);
+  border-radius:50%;flex-shrink:0;
+}
+.sz-note{font-size:.61rem;color:#7A6E62;line-height:1.3;padding-bottom:1px}
+
+/* ── Outlier callout ──────────────────────────────────────────── */
+.out-note{
+  position:absolute;bottom:14px;left:14px;z-index:900;
+  background:#FFFBF5;border:1.5px solid #D4823A;border-radius:8px;
+  padding:6px 11px;font-size:.67rem;color:#7A4010;max-width:210px;
+  line-height:1.4;font-family:'DM Sans',sans-serif;
+  box-shadow:0 2px 10px rgba(212,130,58,.13);
+}
+
+/* ── Leaflet popup ────────────────────────────────────────────── */
+.leaflet-popup-content-wrapper{
+  background:#F7F4EF;border:1.5px solid #DDD5C8;
+  border-radius:10px;box-shadow:0 8px 28px rgba(38,32,26,.13);padding:0;
+}
+.leaflet-popup-content{margin:0;min-width:210px}
+.leaflet-popup-tip{background:#F7F4EF}
+.leaflet-popup-close-button{
+  top:8px!important;right:10px!important;
+  color:#7A6E62!important;font-size:16px!important;
+}
+.p-bar{height:4px;border-radius:4px 4px 0 0}
+.p-body{padding:11px 14px}
+.p-title{
+  font-family:'DM Serif Display',serif;font-size:.95rem;
+  color:#26201A;margin-bottom:1px;line-height:1.2;
+}
+.p-sub{font-size:.69rem;color:#7A6E62;margin-bottom:8px}
+.p-grid{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:.73rem}
+.p-k{color:#7A6E62}.p-v{color:#26201A;font-weight:500}
+.p-chip{
+  display:inline-block;padding:1px 7px;border-radius:999px;
+  font-size:.66rem;font-weight:600;letter-spacing:.03em;
+}
+.p-sep{height:1px;background:#DDD5C8;margin:7px 0}
+.p-corr{font-size:.64rem;color:#7A6E62;font-style:italic;line-height:1.3}
+.p-warn{
+  font-size:.64rem;color:#854010;background:#FFF0E0;
+  border-radius:4px;padding:3px 6px;margin-top:4px;line-height:1.3;
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── Header ─────────────────────────────────────────────────── -->
+  <div id="hdr">
+    <h1>🐬 <em>Sotalia</em></h1>
+    <div class="hdr-sep"></div>
+    <span class="hdr-sub">Gandoca-Manzanillo Wildlife Refuge · Caribbean Costa Rica</span>
+    <div class="hdr-count">
+      <span id="vis-badge">of 114 sightings visible</span>
+      <span>of 114 sightings visible</span>
+    </div>
+  </div>
+
+  <!-- ── Filter bar ─────────────────────────────────────────────── -->
+  <div id="filters">
+
+    <!-- Species -->
+    <div class="fgroup">
+      <span class="fgroup-label">Species</span>
+      <div class="toggle-row" id="sp-row"><button class="tog" data-key="SG" data-group="sp" style="background: rgba(58, 158, 106, 0.094); border-color: rgba(58, 158, 106, 0.533); color: rgb(58, 158, 106);"><div class="dot" style="background:#3A9E6A"></div>SG <span style="font-size:.65rem;opacity:.6">57</span></button><button class="tog" data-key="TT" data-group="sp" style="background: rgba(217, 96, 48, 0.094); border-color: rgba(217, 96, 48, 0.533); color: rgb(217, 96, 48);"><div class="dot" style="background:#D96030"></div>TT <span style="font-size:.65rem;opacity:.6">26</span></button><button class="tog" data-key="Mixed" data-group="sp" style="background: rgba(136, 88, 168, 0.094); border-color: rgba(136, 88, 168, 0.533); color: rgb(136, 88, 168);"><div class="dot" style="background:#8858A8"></div>Mixed species <span style="font-size:.65rem;opacity:.6">31</span></button></div>
+    </div>
+
+    <!-- Behavior -->
+    <div class="fgroup">
+      <span class="fgroup-label">Behavior</span>
+      <div class="toggle-row" id="bh-row"><button class="tog" data-key="Foraging" data-group="bh" style="background: rgba(192, 104, 32, 0.094); border-color: rgba(192, 104, 32, 0.533); color: rgb(192, 104, 32);"><div class="dot" style="background:#C06820"></div>Foraging <span style="font-size:.65rem;opacity:.6">18</span></button><button class="tog" data-key="Social" data-group="bh" style="background: rgba(168, 36, 88, 0.094); border-color: rgba(168, 36, 88, 0.533); color: rgb(168, 36, 88);"><div class="dot" style="background:#A82458"></div>Social <span style="font-size:.65rem;opacity:.6">23</span></button><button class="tog" data-key="Travel" data-group="bh" style="background: rgba(32, 96, 184, 0.094); border-color: rgba(32, 96, 184, 0.533); color: rgb(32, 96, 184);"><div class="dot" style="background:#2060B8"></div>Travel <span style="font-size:.65rem;opacity:.6">70</span></button><button class="tog" data-key="Resting" data-group="bh" style="background: rgba(32, 152, 120, 0.094); border-color: rgba(32, 152, 120, 0.533); color: rgb(32, 152, 120);"><div class="dot" style="background:#209878"></div>Resting <span style="font-size:.65rem;opacity:.6">1</span></button><button class="tog" data-key="Diving" data-group="bh" style="background: rgba(56, 72, 176, 0.094); border-color: rgba(56, 72, 176, 0.533); color: rgb(56, 72, 176);"><div class="dot" style="background:#3848B0"></div>Diving <span style="font-size:.65rem;opacity:.6">1</span></button><button class="tog" data-key="unknown" data-group="bh" style="background: rgba(122, 112, 96, 0.094); border-color: rgba(122, 112, 96, 0.533); color: rgb(122, 112, 96);"><div class="dot" style="background:#7A7060"></div>Unknown <span style="font-size:.65rem;opacity:.6">1</span></button></div>
+    </div>
+
+    <!-- Calves -->
+    <div class="fgroup">
+      <span class="fgroup-label">Calves</span>
+      <div class="toggle-row" id="cv-row"><button class="tog" data-key="Yes" data-group="cv" style="background: rgba(168, 36, 88, 0.094); border-color: rgba(168, 36, 88, 0.533); color: rgb(168, 36, 88);"><div class="dot" style="background:#A82458"></div>With calves <span style="font-size:.65rem;opacity:.6">27</span></button><button class="tog" data-key="No" data-group="cv" style="background: rgba(32, 96, 184, 0.094); border-color: rgba(32, 96, 184, 0.533); color: rgb(32, 96, 184);"><div class="dot" style="background:#2060B8"></div>No calves <span style="font-size:.65rem;opacity:.6">81</span></button><button class="tog" data-key="Unknown" data-group="cv" style="background: rgba(122, 112, 96, 0.094); border-color: rgba(122, 112, 96, 0.533); color: rgb(122, 112, 96);"><div class="dot" style="background:#7A7060"></div>Unknown <span style="font-size:.65rem;opacity:.6">6</span></button></div>
+      <button class="reset-btn" id="resetBtn">Reset all</button>
+    </div>
+
+  </div>
+
+  <!-- ── Map ────────────────────────────────────────────────────── -->
+  <div id="map" class="leaflet-container leaflet-touch leaflet-retina leaflet-fade-anim leaflet-grab leaflet-touch-drag leaflet-touch-zoom" tabindex="0" style="position: relative; outline-style: none;"><div class="leaflet-pane leaflet-map-pane" style="transform: translate3d(0px, -37px, 0px);"><div class="leaflet-pane leaflet-tile-pane"><div class="leaflet-layer " style="z-index: 1; opacity: 1;"><div class="leaflet-tile-container leaflet-zoom-animated" style="z-index: 19; transform: translate3d(0px, 0px, 0px) scale(1);"><img alt="" src="./Sotalia — Gandoca-Manzanillo Sightings_files/1937@2x.png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(417px, -135px, 0px); opacity: 1;"><img alt="" src="./Sotalia — Gandoca-Manzanillo Sightings_files/1938@2x.png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(417px, 121px, 0px); opacity: 1;"><img alt="" src="./Sotalia — Gandoca-Manzanillo Sightings_files/1937@2x(1).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(161px, -135px, 0px); opacity: 1;"><img alt="" src="./Sotalia — Gandoca-Manzanillo Sightings_files/1937@2x(2).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(673px, -135px, 0px); opacity: 1;"><img alt="" src="./Sotalia — Gandoca-Manzanillo Sightings_files/1938@2x(1).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(161px, 121px, 0px); opacity: 1;"><img alt="" src="./Sotalia — Gandoca-Manzanillo Sightings_files/1938@2x(2).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(673px, 121px, 0px); opacity: 1;"><img alt="" src="./Sotalia — Gandoca-Manzanillo Sightings_files/1937@2x(3).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(-95px, -135px, 0px); opacity: 1;"><img alt="" src="./Sotalia — Gandoca-Manzanillo Sightings_files/1937@2x(4).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(929px, -135px, 0px); opacity: 1;"><img alt="" src="./Sotalia — Gandoca-Manzanillo Sightings_files/1938@2x(3).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(-95px, 121px, 0px); opacity: 1;"><img alt="" src="./Sotalia — Gandoca-Manzanillo Sightings_files/1938@2x(4).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(929px, 121px, 0px); opacity: 1;"></div></div></div><div class="leaflet-pane leaflet-overlay-pane"><svg pointer-events="none" class="leaflet-zoom-animated" width="1122" height="334" viewBox="-93 9 1122 334" style="transform: translate3d(-93px, 9px, 0px);"><g><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M532,228a22,22 0 1,0 44,0 a22,22 0 1,0 -44,0 "></path><path class="leaflet-interactive" stroke="#5A3480" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#8858A8" fill-opacity="0.82" fill-rule="evenodd" d="M449,138a18,18 0 1,0 36,0 a18,18 0 1,0 -36,0 "></path><path class="leaflet-interactive" stroke="#5A3480" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#8858A8" fill-opacity="0.82" fill-rule="evenodd" d="M465,162a18,18 0 1,0 36,0 a18,18 0 1,0 -36,0 "></path><path class="leaflet-interactive" stroke="#5A3480" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#8858A8" fill-opacity="0.82" fill-rule="evenodd" d="M431,120a18,18 0 1,0 36,0 a18,18 0 1,0 -36,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M492,216a15,15 0 1,0 30,0 a15,15 0 1,0 -30,0 "></path><path class="leaflet-interactive" stroke="#5A3480" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#8858A8" fill-opacity="0.82" fill-rule="evenodd" d="M454,142a15,15 0 1,0 30,0 a15,15 0 1,0 -30,0 "></path><path class="leaflet-interactive" stroke="#5A3480" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#8858A8" fill-opacity="0.82" fill-rule="evenodd" d="M423,134a15,15 0 1,0 30,0 a15,15 0 1,0 -30,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M506,207a13,13 0 1,0 26,0 a13,13 0 1,0 -26,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M516,226a12,12 0 1,0 24,0 a12,12 0 1,0 -24,0 "></path><path class="leaflet-interactive" stroke="#5A3480" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#8858A8" fill-opacity="0.82" fill-rule="evenodd" d="M512,195a12,12 0 1,0 24,0 a12,12 0 1,0 -24,0 "></path><path class="leaflet-interactive" stroke="#5A3480" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#8858A8" fill-opacity="0.82" fill-rule="evenodd" d="M531,214a11,11 0 1,0 22,0 a11,11 0 1,0 -22,0 "></path><path class="leaflet-interactive" stroke="#5A3480" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#8858A8" fill-opacity="0.82" fill-rule="evenodd" d="M496,208a11,11 0 1,0 22,0 a11,11 0 1,0 -22,0 "></path><path class="leaflet-interactive" stroke="#5A3480" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#8858A8" fill-opacity="0.82" fill-rule="evenodd" d="M539,221a11,11 0 1,0 22,0 a11,11 0 1,0 -22,0 "></path><path class="leaflet-interactive" stroke="#A84018" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#D96030" fill-opacity="0.82" fill-rule="evenodd" d="M586,244a11,11 0 1,0 22,0 a11,11 0 1,0 -22,0 "></path><path class="leaflet-interactive" stroke="#5A3480" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#8858A8" fill-opacity="0.82" fill-rule="evenodd" d="M438,103a11,11 0 1,0 22,0 a11,11 0 1,0 -22,0 "></path><path class="leaflet-interactive" stroke="#5A3480" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#8858A8" fill-opacity="0.82" fill-rule="evenodd" d="M600,249a10,10 0 1,0 20,0 a10,10 0 1,0 -20,0 "></path><path class="leaflet-interactive" stroke="#5A3480" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#8858A8" fill-opacity="0.82" fill-rule="evenodd" d="M520,181a10,10 0 1,0 20,0 a10,10 0 1,0 -20,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M527,217a10,10 0 1,0 20,0 a10,10 0 1,0 -20,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M568,234a10,10 0 1,0 20,0 a10,10 0 1,0 -20,0 "></path><path class="leaflet-interactive" stroke="#5A3480" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#8858A8" fill-opacity="0.82" fill-rule="evenodd" d="M464,136a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M449,136a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0 "></path><path class="leaflet-interactive" stroke="#5A3480" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#8858A8" fill-opacity="0.82" fill-rule="evenodd" d="M458,142a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0 "></path><path class="leaflet-interactive" stroke="#A84018" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#D96030" fill-opacity="0.82" fill-rule="evenodd" d="M416,90a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0 "></path><path class="leaflet-interactive" stroke="#A84018" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#D96030" fill-opacity="0.82" fill-rule="evenodd" d="M311,76a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M447,126a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0 "></path><path class="leaflet-interactive" stroke="#5A3480" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#8858A8" fill-opacity="0.82" fill-rule="evenodd" d="M475,171a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M516,223a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M477,86a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0 "></path><path class="leaflet-interactive" stroke="#5A3480" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#8858A8" fill-opacity="0.82" fill-rule="evenodd" d="M462,141a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0 "></path><path class="leaflet-interactive" stroke="#5A3480" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#8858A8" fill-opacity="0.82" fill-rule="evenodd" d="M494,212a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0 "></path><path class="leaflet-interactive" stroke="#5A3480" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#8858A8" fill-opacity="0.82" fill-rule="evenodd" d="M480,167a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M501,215a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M547,227a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0 "></path><path class="leaflet-interactive" stroke="#5A3480" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#8858A8" fill-opacity="0.82" fill-rule="evenodd" d="M519,194a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0 "></path><path class="leaflet-interactive" stroke="#5A3480" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#8858A8" fill-opacity="0.82" fill-rule="evenodd" d="M456,129a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0 "></path><path class="leaflet-interactive" stroke="#5A3480" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#8858A8" fill-opacity="0.82" fill-rule="evenodd" d="M426,122a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0 "></path><path class="leaflet-interactive" stroke="#A84018" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#D96030" fill-opacity="0.82" fill-rule="evenodd" d="M456,129a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0 "></path><path class="leaflet-interactive" stroke="#A84018" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#D96030" fill-opacity="0.82" fill-rule="evenodd" d="M420,104a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M520,217a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M554,238a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M476,157a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0 "></path><path class="leaflet-interactive" stroke="#5A3480" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#8858A8" fill-opacity="0.82" fill-rule="evenodd" d="M488,126a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M471,160a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M560,233a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0 "></path><path class="leaflet-interactive" stroke="#5A3480" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#8858A8" fill-opacity="0.82" fill-rule="evenodd" d="M450,151a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0 "></path><path class="leaflet-interactive" stroke="#5A3480" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#8858A8" fill-opacity="0.82" fill-rule="evenodd" d="M516,208a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0 "></path><path class="leaflet-interactive" stroke="#5A3480" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#8858A8" fill-opacity="0.82" fill-rule="evenodd" d="M478,218a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0 "></path><path class="leaflet-interactive" stroke="#5A3480" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#8858A8" fill-opacity="0.82" fill-rule="evenodd" d="M487,167a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M438,121a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0 "></path><path class="leaflet-interactive" stroke="#5A3480" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#8858A8" fill-opacity="0.82" fill-rule="evenodd" d="M428,113a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0 "></path><path class="leaflet-interactive" stroke="#A84018" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#D96030" fill-opacity="0.82" fill-rule="evenodd" d="M460,121a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0 "></path><path class="leaflet-interactive" stroke="#A84018" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#D96030" fill-opacity="0.82" fill-rule="evenodd" d="M487,157a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0 "></path><path class="leaflet-interactive" stroke="#5A3480" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#8858A8" fill-opacity="0.82" fill-rule="evenodd" d="M527,190a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0 "></path><path class="leaflet-interactive" stroke="#A84018" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#D96030" fill-opacity="0.82" fill-rule="evenodd" d="M536,190a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M523,209a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0 "></path><path class="leaflet-interactive" stroke="#A84018" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#D96030" fill-opacity="0.82" fill-rule="evenodd" d="M461,137a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M521,149a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0 "></path><path class="leaflet-interactive" stroke="#A84018" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#D96030" fill-opacity="0.82" fill-rule="evenodd" d="M486,152a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M454,127a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M449,126a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M498,211a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M517,190a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M482,173a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M512,224a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0 "></path><path class="leaflet-interactive" stroke="#A84018" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#D96030" fill-opacity="0.82" fill-rule="evenodd" d="M508,176a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0 "></path><path class="leaflet-interactive" stroke="#9A4E22" stroke-opacity="1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="#D4703A" fill-opacity="0.45" fill-rule="evenodd" d="M0 0"></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M473,154a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M539,223a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0 "></path><path class="leaflet-interactive" stroke="#A84018" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#D96030" fill-opacity="0.82" fill-rule="evenodd" d="M468,191a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0 "></path><path class="leaflet-interactive" stroke="#A84018" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#D96030" fill-opacity="0.82" fill-rule="evenodd" d="M535,203a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0 "></path><path class="leaflet-interactive" stroke="#A84018" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#D96030" fill-opacity="0.82" fill-rule="evenodd" d="M444,99a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0 "></path><path class="leaflet-interactive" stroke="#A84018" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#D96030" fill-opacity="0.82" fill-rule="evenodd" d="M482,148a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M506,219a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M529,218a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M439,117a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0 "></path><path class="leaflet-interactive" stroke="#5A3480" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#8858A8" fill-opacity="0.82" fill-rule="evenodd" d="M501,185a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M459,124a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M428,131a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M461,159a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M452,168a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M581,173a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M313,77a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#A84018" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#D96030" fill-opacity="0.82" fill-rule="evenodd" d="M556,153a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#A84018" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#D96030" fill-opacity="0.82" fill-rule="evenodd" d="M421,124a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#A84018" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#D96030" fill-opacity="0.82" fill-rule="evenodd" d="M476,168a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M455,136a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M518,225a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#A84018" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#D96030" fill-opacity="0.82" fill-rule="evenodd" d="M494,175a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M500,209a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M517,212a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M493,201a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M456,131a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M452,136a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M553,207a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M460,139a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M439,148a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#A84018" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#D96030" fill-opacity="0.82" fill-rule="evenodd" d="M455,121a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#A84018" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#D96030" fill-opacity="0.82" fill-rule="evenodd" d="M477,156a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#A84018" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#D96030" fill-opacity="0.82" fill-rule="evenodd" d="M433,102a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#A84018" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#D96030" fill-opacity="0.82" fill-rule="evenodd" d="M435,132a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M490,182a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#A84018" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#D96030" fill-opacity="0.82" fill-rule="evenodd" d="M504,187a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M530,222a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M597,248a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#5A3480" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#8858A8" fill-opacity="0.82" fill-rule="evenodd" d="M440,152a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#A84018" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#D96030" fill-opacity="0.82" fill-rule="evenodd" d="M543,231a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M540,235a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M513,164a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M606,277a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M472,190a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M582,255a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M610,269a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0 "></path><path class="leaflet-interactive" stroke="#A84018" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#D96030" fill-opacity="0.82" fill-rule="evenodd" d="M436,102a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0 "></path><path class="leaflet-interactive" stroke="#226644" stroke-opacity="1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="#3A9E6A" fill-opacity="0.82" fill-rule="evenodd" d="M585,236a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0 "></path></g></svg></div><div class="leaflet-pane leaflet-shadow-pane"></div><div class="leaflet-pane leaflet-marker-pane"></div><div class="leaflet-pane leaflet-tooltip-pane"></div><div class="leaflet-pane leaflet-popup-pane"></div><div class="leaflet-proxy leaflet-zoom-animated" style="transform: translate3d(283698px, 496183px, 0px) scale(2048);"></div></div><div class="leaflet-control-container"><div class="leaflet-top leaflet-left"></div><div class="leaflet-top leaflet-right"><div class="leaflet-control-zoom leaflet-bar leaflet-control"><a class="leaflet-control-zoom-in" href="file:///C:/Users/lmaycoll/Downloads/sotalia_map_3.html#" title="Zoom in" role="button" aria-label="Zoom in" aria-disabled="false"><span aria-hidden="true">+</span></a><a class="leaflet-control-zoom-out" href="file:///C:/Users/lmaycoll/Downloads/sotalia_map_3.html#" title="Zoom out" role="button" aria-label="Zoom out" aria-disabled="false"><span aria-hidden="true">−</span></a></div></div><div class="leaflet-bottom leaflet-left"></div><div class="leaflet-bottom leaflet-right"><div class="lgd leaflet-control" id="lgd-panel"><div class="lgd-ttl">Species</div><div class="lgd-row">
+        <div class="lgd-dot" style="background:#3A9E6A;border-color:#226644"></div>
+        <span class="lgd-lbl">SG — Sotalia guianensis</span>
+        <span class="lgd-n" id="lgd-sp-SG" style="color: rgb(122, 110, 98);">57</span>
+      </div><div class="lgd-row">
+        <div class="lgd-dot" style="background:#D96030;border-color:#A84018"></div>
+        <span class="lgd-lbl">TT — Tursiops truncatus</span>
+        <span class="lgd-n" id="lgd-sp-TT" style="color: rgb(122, 110, 98);">26</span>
+      </div><div class="lgd-row">
+        <div class="lgd-dot" style="background:#8858A8;border-color:#5A3480"></div>
+        <span class="lgd-lbl">Mixed species</span>
+        <span class="lgd-n" id="lgd-sp-Mixed" style="color: rgb(122, 110, 98);">31</span>
+      </div><div class="lgd-sep"></div>
+    <div class="lgd-ttl">Group size</div>
+    <div class="sz-row">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div class="sz-b" style="width:10px;height:10px"></div>
+        <span style="font-size:.59rem;color:#7A6E62">2</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div class="sz-b" style="width:18px;height:18px"></div>
+        <span style="font-size:.59rem;color:#7A6E62">15</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div class="sz-b" style="width:28px;height:28px"></div>
+        <span style="font-size:.59rem;color:#7A6E62">30</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div class="sz-b" style="width:38px;height:38px"></div>
+        <span style="font-size:.59rem;color:#7A6E62">40</span>
+      </div>
+      <span class="sz-note">individuals<br>per group</span>
+    </div>
+    <div class="lgd-sep"></div>
+    <div class="lgd-row" style="margin-bottom:0">
+      <div class="lgd-dot" style="background:#D4703A33;border:1.5px dashed #D4703A"></div>
+      <span class="lgd-lbl" style="font-size:.69rem;color:#7A6E62">Ambiguous coord (1)</span>
+    </div></div><div class="leaflet-control-attribution leaflet-control"><a href="https://leafletjs.com/" title="A JavaScript library for interactive maps"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8" class="leaflet-attribution-flag"><path fill="#4C7BE1" d="M0 0h12v4H0z"></path><path fill="#FFD500" d="M0 4h12v3H0z"></path><path fill="#E0BC00" d="M0 7h12v1H0z"></path></svg> Leaflet</a> <span aria-hidden="true">|</span> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a></div></div></div><div class="out-note">⚠ 1 record (Mixed, 2003-08-17) sits south of the refuge — coordinate still ambiguous after correction</div></div>
+
+</div><!-- #app -->
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// DATA  (114 records, corrected coords, MSG → Mixed)
+// ═══════════════════════════════════════════════════════════════
+const DATA = [{"Lat":9.61974,"Long":-82.6008,"Date":"2005-09-03","Hour":"13:39","Group":4,"Species":"Mixed","Calve Presence":"No","Group Size":11,"Behavior":"Social","Coord Correction":"No","Coord Note":""},{"Lat":9.61742,"Long":-82.59801,"Date":"2005-09-04","Hour":"08:32","Group":1,"Species":"Mixed","Calve Presence":"No","Group Size":12,"Behavior":"Social","Coord Correction":"No","Coord Note":""},{"Lat":9.61895,"Long":-82.601867,"Date":"2004-07-14","Hour":"07:34","Group":1,"Species":"SG","Calve Presence":"No","Group Size":4,"Behavior":"Foraging","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.617483,"Long":-82.602967,"Date":"2004-07-23","Hour":"08:42","Group":1,"Species":"SG","Calve Presence":"No","Group Size":12,"Behavior":"Foraging","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.6173,"Long":-82.6031,"Date":"2004-07-23","Hour":"02:29","Group":3,"Species":"SG","Calve Presence":"No","Group Size":4,"Behavior":"Foraging","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD, Long sign fixed","Coord Note":""},{"Lat":9.6229,"Long":-82.6062,"Date":"2004-07-25","Hour":"07:45","Group":1,"Species":"Mixed","Calve Presence":"No","Group Size":30,"Behavior":"Foraging","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.6152,"Long":-82.60003,"Date":"2005-09-03","Hour":"08:16","Group":1,"Species":"Mixed","Calve Presence":"No","Group Size":12,"Behavior":"Foraging","Coord Correction":"No","Coord Note":""},{"Lat":9.62067,"Long":-82.5901,"Date":"2005-09-03","Hour":"13:05","Group":4,"Species":"Mixed","Calve Presence":"No","Group Size":9,"Behavior":"Foraging","Coord Correction":"No","Coord Note":""},{"Lat":9.62245,"Long":-82.60727,"Date":"2005-09-04","Hour":"07:49","Group":1,"Species":"SG","Calve Presence":"No","Group Size":8,"Behavior":"Foraging","Coord Correction":"No","Coord Note":""},{"Lat":9.6214,"Long":-82.60062,"Date":"2005-09-05","Hour":"07:46","Group":1,"Species":"SG","Calve Presence":"No","Group Size":5,"Behavior":"Foraging","Coord Correction":"No","Coord Note":""},{"Lat":9.62224,"Long":-82.6111,"Date":"2005-09-05","Hour":"08:47","Group":1,"Species":"Mixed","Calve Presence":"No","Group Size":11,"Behavior":"Foraging","Coord Correction":"No","Coord Note":""},{"Lat":9.5868,"Long":-82.57911,"Date":"2005-11-03","Hour":"09:23","Group":2,"Species":"SG","Calve Presence":"No","Group Size":18,"Behavior":"Foraging","Coord Correction":"No","Coord Note":""},{"Lat":9.613,"Long":-82.579,"Date":"2003-10-08","Hour":"08:02","Group":1,"Species":"SG","Calve Presence":"Yes","Group Size":7,"Behavior":"Foraging","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.628333,"Long":-82.613,"Date":"2003-09-14","Hour":"07:20","Group":1,"Species":"TT","Calve Presence":"Yes","Group Size":10,"Behavior":"Foraging","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.63276,"Long":-82.61454,"Date":"2005-11-02","Hour":"09:37","Group":1,"Species":"TT","Calve Presence":"No","Group Size":12,"Behavior":"Resting","Coord Correction":"No","Coord Note":""},{"Lat":9.61894,"Long":-82.61142,"Date":"2005-09-05","Hour":"09:16","Group":2,"Species":"SG","Calve Presence":"Yes","Group Size":5,"Behavior":"Travel","Coord Correction":"No","Coord Note":""},{"Lat":9.5908,"Long":-82.57434,"Date":"2005-11-26","Hour":"09:31","Group":3,"Species":"Mixed","Calve Presence":"Yes","Group Size":16,"Behavior":"Travel","Coord Correction":"No","Coord Note":""},{"Lat":9.59012,"Long":-82.58645,"Date":"2005-11-26","Hour":"11:43","Group":4,"Species":"SG","Calve Presence":"Yes","Group Size":25,"Behavior":"Travel","Coord Correction":"No","Coord Note":""},{"Lat":9.59292,"Long":-82.58612,"Date":"2005-11-26","Hour":"12:13","Group":5,"Species":"Mixed","Calve Presence":"Yes","Group Size":16,"Behavior":"Travel","Coord Correction":"No","Coord Note":""},{"Lat":9.386,"Long":-82.601167,"Date":"2003-08-17","Hour":"07:25","Group":1,"Species":"Mixed","Calve Presence":"No","Group Size":6,"Behavior":"Travel","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":"WARNING: ambiguous after correction – verify field record"},{"Lat":9.625,"Long":-82.610667,"Date":"2003-09-15","Hour":"07:15","Group":1,"Species":"Mixed","Calve Presence":"No","Group Size":8,"Behavior":"Travel","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.611333,"Long":-82.5955,"Date":"2003-08-17","Hour":"08:33","Group":2,"Species":"SG","Calve Presence":"No","Group Size":6,"Behavior":"Travel","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.6095,"Long":-82.6,"Date":"2003-08-19","Hour":"07:42","Group":1,"Species":"SG","Calve Presence":"No","Group Size":5,"Behavior":"Travel","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.593167,"Long":-82.5685,"Date":"2003-08-31","Hour":"08:20","Group":2,"Species":"SG","Calve Presence":"No","Group Size":4,"Behavior":"Travel","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.616333,"Long":-82.600333,"Date":"2003-09-02","Hour":"07:10","Group":1,"Species":"SG","Calve Presence":"No","Group Size":4,"Behavior":"Travel","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.6065,"Long":-82.603,"Date":"2003-09-05","Hour":"07:46","Group":1,"Species":"SG","Calve Presence":"No","Group Size":5,"Behavior":"Travel","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.604667,"Long":-82.558833,"Date":"2003-09-06","Hour":"07:00","Group":1,"Species":"SG","Calve Presence":"No","Group Size":5,"Behavior":"Travel","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.588,"Long":-82.572833,"Date":"2003-09-14","Hour":"09:03","Group":2,"Species":"SG","Calve Presence":"No","Group Size":6,"Behavior":"Travel","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.613333,"Long":-82.607667,"Date":"2003-09-17","Hour":"09:52","Group":3,"Species":"SG","Calve Presence":"No","Group Size":4,"Behavior":"Travel","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.637167,"Long":-82.650833,"Date":"2003-09-21","Hour":"07:13","Group":1,"Species":"SG","Calve Presence":"No","Group Size":5,"Behavior":"Travel","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.6225,"Long":-82.602,"Date":"2003-08-17","Hour":"08:02","Group":1,"Species":"TT","Calve Presence":"No","Group Size":4,"Behavior":"Travel","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.6105,"Long":-82.594667,"Date":"2003-08-20","Hour":"09:20","Group":1,"Species":"TT","Calve Presence":"No","Group Size":4,"Behavior":"Travel","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.6375,"Long":-82.6505,"Date":"2003-08-22","Hour":"07:00","Group":1,"Species":"TT","Calve Presence":"No","Group Size":12,"Behavior":"Travel","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.6115,"Long":-82.567333,"Date":"2003-08-23","Hour":"08:44","Group":1,"Species":"TT","Calve Presence":"No","Group Size":5,"Behavior":"Travel","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.6225,"Long":-82.599833,"Date":"2003-08-31","Hour":"07:15","Group":1,"Species":"TT","Calve Presence":"No","Group Size":8,"Behavior":"Travel","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.629,"Long":-82.609667,"Date":"2003-09-15","Hour":"07:28","Group":1,"Species":"TT","Calve Presence":"No","Group Size":4,"Behavior":"Travel","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.598667,"Long":-82.597167,"Date":"2003-09-17","Hour":"07:10","Group":1,"Species":"TT","Calve Presence":"No","Group Size":6,"Behavior":"Travel","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.621333,"Long":-82.613667,"Date":"2003-09-17","Hour":"09:38","Group":2,"Species":"TT","Calve Presence":"No","Group Size":5,"Behavior":"Travel","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.618833,"Long":-82.608833,"Date":"2003-09-27","Hour":"08:32","Group":1,"Species":"TT","Calve Presence":"No","Group Size":4,"Behavior":"Travel","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.611833,"Long":-82.591167,"Date":"2003-10-08","Hour":"09:48","Group":3,"Species":"TT","Calve Presence":"No","Group Size":7,"Behavior":"Travel","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.610167,"Long":-82.590333,"Date":"2003-10-09","Hour":"07:41","Group":1,"Species":"TT","Calve Presence":"No","Group Size":8,"Behavior":"Travel","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.601717,"Long":-82.590067,"Date":"2004-07-14","Hour":"08:46","Group":2,"Species":"SG","Calve Presence":"No","Group Size":4,"Behavior":"Travel","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.598967,"Long":-82.576667,"Date":"2004-07-23","Hour":"11:27","Group":2,"Species":"Mixed","Calve Presence":"No","Group Size":8,"Behavior":"Travel","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.620483,"Long":-82.602033,"Date":"2004-07-26","Hour":"09:35","Group":1,"Species":"SG","Calve Presence":"No","Group Size":7,"Behavior":"Travel","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD, Long sign fixed","Coord Note":""},{"Lat":9.620683,"Long":-82.60385,"Date":"2004-07-26","Hour":"12:52","Group":2,"Species":"SG","Calve Presence":"No","Group Size":12,"Behavior":"Travel","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD, Long sign fixed","Coord Note":""},{"Lat":9.620683,"Long":-82.60385,"Date":"2004-07-26","Hour":"12:52","Group":3,"Species":"SG","Calve Presence":"No","Group Size":7,"Behavior":"Travel","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD, Long sign fixed","Coord Note":""},{"Lat":9.597217,"Long":-82.580317,"Date":"2004-07-27","Hour":"08:20","Group":1,"Species":"Mixed","Calve Presence":"No","Group Size":17,"Behavior":"Travel","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD, Long sign fixed","Coord Note":""},{"Lat":9.5947,"Long":-82.57435,"Date":"2004-07-27","Hour":"08:49","Group":2,"Species":"TT","Calve Presence":"No","Group Size":6,"Behavior":"Travel","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD, Long sign fixed","Coord Note":""},{"Lat":9.60642,"Long":-82.59497,"Date":"2005-09-03","Hour":"09:04","Group":2,"Species":"TT","Calve Presence":"No","Group Size":5,"Behavior":"Travel","Coord Correction":"No","Coord Note":""},{"Lat":9.6055,"Long":-82.59429,"Date":"2005-09-03","Hour":"09:16","Group":2,"Species":"Mixed","Calve Presence":"No","Group Size":12,"Behavior":"Travel","Coord Correction":"No","Coord Note":""},{"Lat":9.61974,"Long":-82.6008,"Date":"2005-09-03","Hour":"13:32","Group":4,"Species":"TT","Calve Presence":"No","Group Size":11,"Behavior":"Travel","Coord Correction":"No","Coord Note":""},{"Lat":9.6173,"Long":-82.6022,"Date":"2005-09-04","Hour":"10:27","Group":3,"Species":"SG","Calve Presence":"No","Group Size":5,"Behavior":"Travel","Coord Correction":"No","Coord Note":""},{"Lat":9.60909,"Long":-82.59597,"Date":"2005-09-05","Hour":"12:10","Group":3,"Species":"SG","Calve Presence":"No","Group Size":9,"Behavior":"Travel","Coord Correction":"No","Coord Note":""},{"Lat":9.59209,"Long":-82.58689,"Date":"2005-11-02","Hour":"11:52","Group":4,"Species":"SG","Calve Presence":"No","Group Size":7,"Behavior":"Travel","Coord Correction":"No","Coord Note":""},{"Lat":9.59901,"Long":-82.57355,"Date":"2005-11-03","Hour":"07:16","Group":1,"Species":"TT","Calve Presence":"No","Group Size":8,"Behavior":"Travel","Coord Correction":"No","Coord Note":""},{"Lat":9.58723,"Long":-82.5804,"Date":"2005-11-03","Hour":"08:53","Group":2,"Species":"SG","Calve Presence":"No","Group Size":5,"Behavior":"Travel","Coord Correction":"No","Coord Note":""},{"Lat":9.58772,"Long":-82.58013,"Date":"2005-11-03","Hour":"08:59","Group":2,"Species":"SG","Calve Presence":"No","Group Size":12,"Behavior":"Travel","Coord Correction":"No","Coord Note":""},{"Lat":9.63418,"Long":-82.5936,"Date":"2005-11-24","Hour":"11:46","Group":1,"Species":"SG","Calve Presence":"No","Group Size":12,"Behavior":"Travel","Coord Correction":"No","Coord Note":""},{"Lat":9.6157,"Long":-82.5988,"Date":"2005-11-24","Hour":"11:52","Group":1,"Species":"Mixed","Calve Presence":"No","Group Size":12,"Behavior":"Travel","Coord Correction":"No","Coord Note":""},{"Lat":9.62995,"Long":-82.60554,"Date":"2005-11-25","Hour":"08:03","Group":1,"Species":"TT","Calve Presence":"No","Group Size":6,"Behavior":"Travel","Coord Correction":"No","Coord Note":""},{"Lat":9.60023,"Long":-82.5852,"Date":"2005-11-25","Hour":"09:40","Group":2,"Species":"TT","Calve Presence":"No","Group Size":4,"Behavior":"Travel","Coord Correction":"No","Coord Note":""},{"Lat":9.59915,"Long":-82.58061,"Date":"2005-11-25","Hour":"09:52","Group":2,"Species":"SG","Calve Presence":"No","Group Size":7,"Behavior":"Travel","Coord Correction":"No","Coord Note":""},{"Lat":9.61335,"Long":-82.59246,"Date":"2005-11-26","Hour":"08:20","Group":1,"Species":"TT","Calve Presence":"No","Group Size":6,"Behavior":"Travel","Coord Correction":"No","Coord Note":""},{"Lat":9.60402,"Long":-82.58874,"Date":"2005-11-26","Hour":"08:59","Group":2,"Species":"TT","Calve Presence":"No","Group Size":5,"Behavior":"Travel","Coord Correction":"No","Coord Note":""},{"Lat":9.58927,"Long":-82.58413,"Date":"2005-11-26","Hour":"11:09","Group":3,"Species":"SG","Calve Presence":"No","Group Size":6,"Behavior":"Travel","Coord Correction":"No","Coord Note":""},{"Lat":9.59156,"Long":-82.58756,"Date":"2005-11-26","Hour":"11:37","Group":4,"Species":"Mixed","Calve Presence":"No","Group Size":12,"Behavior":"Travel","Coord Correction":"No","Coord Note":""},{"Lat":9.589667,"Long":-82.576333,"Date":"2003-09-28","Hour":"07:55","Group":1,"Species":"SG","Calve Presence":"Yes","Group Size":6,"Behavior":"Travel","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.60476,"Long":-82.59255,"Date":"2005-09-03","Hour":"09:34","Group":2,"Species":"SG","Calve Presence":"Yes","Group Size":7,"Behavior":"Travel","Coord Correction":"No","Coord Note":""},{"Lat":9.60689,"Long":-82.59254,"Date":"2005-09-03","Hour":"09:41","Group":2,"Species":"Mixed","Calve Presence":"Yes","Group Size":12,"Behavior":"Travel","Coord Correction":"No","Coord Note":""},{"Lat":9.587667,"Long":-82.582,"Date":"2003-09-18","Hour":"10:00","Group":1,"Species":"SG","Calve Presence":"Yes","Group Size":7,"Behavior":"Travel","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.58816,"Long":-82.5762,"Date":"2006-09-01","Hour":"02:46","Group":2,"Species":"SG","Calve Presence":"Unknown","Group Size":4,"Behavior":"Diving","Coord Correction":"Yes – Long sign fixed","Coord Note":""},{"Lat":9.590533,"Long":-82.58535,"Date":"2006-05-06","Hour":"08:26","Group":1,"Species":"SG","Calve Presence":"No","Group Size":12,"Behavior":"Foraging","Coord Correction":"Yes – DM string converted","Coord Note":""},{"Lat":9.5769,"Long":-82.558767,"Date":"2006-05-07","Hour":"11:30","Group":3,"Species":"SG","Calve Presence":"No","Group Size":2,"Behavior":"Foraging","Coord Correction":"Yes – DM string converted","Coord Note":""},{"Lat":9.57943,"Long":-82.55342,"Date":"2006-09-01","Hour":"03:14","Group":3,"Species":"SG","Calve Presence":"No","Group Size":4,"Behavior":"Foraging","Coord Correction":"Yes – Long sign fixed","Coord Note":""},{"Lat":9.586617,"Long":-82.569333,"Date":"2006-05-08","Hour":"10:02","Group":2,"Species":"SG","Calve Presence":"Yes","Group Size":12,"Behavior":"Foraging","Coord Correction":"Yes – DM string converted","Coord Note":""},{"Lat":9.589917,"Long":-82.578867,"Date":"2006-05-10","Hour":"06:58","Group":1,"Species":"SG","Calve Presence":"Yes","Group Size":10,"Behavior":"Foraging","Coord Correction":"Yes – DM string converted","Coord Note":""},{"Lat":9.58085,"Long":-82.555517,"Date":"2006-06-04","Hour":"09:45","Group":2,"Species":"TT","Calve Presence":"Yes","Group Size":15,"Behavior":"Foraging","Coord Correction":"Yes – DM string converted","Coord Note":""},{"Lat":9.59265,"Long":-82.5868,"Date":"2005-11-02","Hour":"11:11","Group":3,"Species":"SG","Calve Presence":"No","Group Size":5,"Behavior":"Social","Coord Correction":"No","Coord Note":""},{"Lat":9.584417,"Long":-82.565367,"Date":"2006-05-06","Hour":"12:58","Group":4,"Species":"SG","Calve Presence":"No","Group Size":9,"Behavior":"Social","Coord Correction":"Yes – DM string converted","Coord Note":""},{"Lat":9.592483,"Long":-82.577967,"Date":"2006-05-09","Hour":"13:13","Group":3,"Species":"SG","Calve Presence":"No","Group Size":8,"Behavior":"Social","Coord Correction":"Yes – DM string converted","Coord Note":""},{"Lat":9.59318,"Long":-82.58218,"Date":"2006-09-01","Hour":"08:45","Group":1,"Species":"SG","Calve Presence":"No","Group Size":20,"Behavior":"Social","Coord Correction":"Yes – Long sign fixed","Coord Note":""},{"Lat":9.61235,"Long":-82.603,"Date":"2006-09-02","Hour":"08:23","Group":3,"Species":"Mixed","Calve Presence":"No","Group Size":9,"Behavior":"Social","Coord Correction":"Yes – Long sign fixed","Coord Note":""},{"Lat":9.582683,"Long":-82.567133,"Date":"2006-05-06","Hour":"09:50","Group":2,"Species":"SG","Calve Presence":"Yes","Group Size":10,"Behavior":"Social","Coord Correction":"Yes – DM string converted","Coord Note":""},{"Lat":9.588717,"Long":-82.5715,"Date":"2006-05-07","Hour":"13:36","Group":5,"Species":"Mixed","Calve Presence":"Yes","Group Size":16,"Behavior":"Social","Coord Correction":"Yes – DM string converted","Coord Note":""},{"Lat":9.593033,"Long":-82.580583,"Date":"2006-05-09","Hour":"09:24","Group":1,"Species":"Mixed","Calve Presence":"Yes","Group Size":9,"Behavior":"Social","Coord Correction":"Yes – DM string converted","Coord Note":""},{"Lat":9.57905,"Long":-82.550833,"Date":"2006-06-04","Hour":"11:30","Group":1,"Species":"Mixed","Calve Presence":"Yes","Group Size":14,"Behavior":"Social","Coord Correction":"Yes – DM string converted","Coord Note":""},{"Lat":9.616617,"Long":-82.599967,"Date":"2006-06-05","Hour":"07:45","Group":1,"Species":"Mixed","Calve Presence":"Yes","Group Size":32,"Behavior":"Social","Coord Correction":"Yes – DM string converted","Coord Note":""},{"Lat":9.61805,"Long":-82.609833,"Date":"2006-06-06","Hour":"07:37","Group":1,"Species":"Mixed","Calve Presence":"Yes","Group Size":24,"Behavior":"Social","Coord Correction":"Yes – DM string converted","Coord Note":""},{"Lat":9.602067,"Long":-82.578267,"Date":"2006-06-07","Hour":"08:52","Group":2,"Species":"Mixed","Calve Presence":"Yes","Group Size":14,"Behavior":"Social","Coord Correction":"Yes – DM string converted","Coord Note":""},{"Lat":9.61176,"Long":-82.60707,"Date":"2006-09-02","Hour":"08:23","Group":2,"Species":"Mixed","Calve Presence":"Yes","Group Size":4,"Behavior":"Social","Coord Correction":"Yes – Long sign fixed","Coord Note":""},{"Lat":9.58531,"Long":-82.57193,"Date":"2006-09-02","Hour":"10:33","Group":5,"Species":"TT","Calve Presence":"Yes","Group Size":4,"Behavior":"Social","Coord Correction":"Yes – Long sign fixed","Coord Note":""},{"Lat":9.6087,"Long":-82.59465,"Date":"2004-07-24","Hour":"07:50","Group":1,"Species":"Mixed","Calve Presence":"Unknown","Group Size":32,"Behavior":"Social","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.58624,"Long":-82.57021,"Date":"2006-09-02","Hour":"09:59","Group":4,"Species":"SG","Calve Presence":"Unknown","Group Size":40,"Behavior":"Social","Coord Correction":"Yes – Long sign fixed","Coord Note":""},{"Lat":9.6285,"Long":-82.606167,"Date":"2003-08-22","Hour":"07:19","Group":1,"Species":"Mixed","Calve Presence":"No","Group Size":15,"Behavior":"Social","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.589667,"Long":-82.593333,"Date":"2003-10-08","Hour":"09:26","Group":2,"Species":"Mixed","Calve Presence":"No","Group Size":9,"Behavior":"Social","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.583833,"Long":-82.573,"Date":"2003-10-07","Hour":"07:33","Group":1,"Species":"SG","Calve Presence":"No","Group Size":4,"Behavior":"Social","Coord Correction":"Yes – Lat DDM→DD, Long DDM→DD","Coord Note":""},{"Lat":9.59779,"Long":-82.57901,"Date":"2005-11-02","Hour":"12:32","Group":5,"Species":"Mixed","Calve Presence":"No","Group Size":12,"Behavior":"Social","Coord Correction":"No","Coord Note":""},{"Lat":9.61515,"Long":-82.59924,"Date":"2005-11-24","Hour":"12:17","Group":1,"Species":"Mixed","Calve Presence":"No","Group Size":25,"Behavior":"Social","Coord Correction":"No","Coord Note":""},{"Lat":9.572433,"Long":-82.549183,"Date":"2006-05-07","Hour":"08:57","Group":1,"Species":"SG","Calve Presence":"No","Group Size":2,"Behavior":"Travel","Coord Correction":"Yes – DM string converted","Coord Note":""},{"Lat":9.59165,"Long":-82.580733,"Date":"2006-05-07","Hour":"09:44","Group":2,"Species":"SG","Calve Presence":"No","Group Size":5,"Behavior":"Travel","Coord Correction":"Yes – DM string converted","Coord Note":""},{"Lat":9.623633,"Long":-82.607333,"Date":"2006-05-10","Hour":"02:29","Group":2,"Species":"SG","Calve Presence":"No","Group Size":6,"Behavior":"Travel","Coord Correction":"Yes – DM string converted","Coord Note":""},{"Lat":9.610383,"Long":-82.593983,"Date":"2006-06-04","Hour":"08:42","Group":1,"Species":"SG","Calve Presence":"No","Group Size":10,"Behavior":"Travel","Coord Correction":"Yes – DM string converted","Coord Note":""},{"Lat":9.600767,"Long":-82.5859,"Date":"2006-06-05","Hour":"09:46","Group":2,"Species":"Mixed","Calve Presence":"No","Group Size":6,"Behavior":"Travel","Coord Correction":"Yes – DM string converted","Coord Note":""},{"Lat":9.6079,"Long":-82.582083,"Date":"2006-06-06","Hour":"10:01","Group":2,"Species":"SG","Calve Presence":"No","Group Size":4,"Behavior":"Travel","Coord Correction":"Yes – DM string converted","Coord Note":""},{"Lat":9.62883,"Long":-82.60878,"Date":"2006-09-02","Hour":"08:08","Group":1,"Species":"TT","Calve Presence":"No","Group Size":2,"Behavior":"Travel","Coord Correction":"Yes – Long sign fixed","Coord Note":""},{"Lat":9.56975,"Long":-82.550183,"Date":"2006-05-08","Hour":"08:37","Group":1,"Species":"SG","Calve Presence":"Yes","Group Size":4,"Behavior":"Travel","Coord Correction":"Yes – DM string converted","Coord Note":""},{"Lat":9.59,"Long":-82.57595,"Date":"2006-05-09","Hour":"10:30","Group":2,"Species":"SG","Calve Presence":"Yes","Group Size":14,"Behavior":"Travel","Coord Correction":"Yes – DM string converted","Coord Note":""},{"Lat":9.595333,"Long":-82.589033,"Date":"2006-06-05","Hour":"10:32","Group":4,"Species":"SG","Calve Presence":"Yes","Group Size":5,"Behavior":"Travel","Coord Correction":"Yes – DM string converted","Coord Note":""},{"Lat":9.60385,"Long":-82.58345,"Date":"2006-06-07","Hour":"08:18","Group":1,"Species":"TT","Calve Presence":"Yes","Group Size":7,"Behavior":"Travel","Coord Correction":"Yes – DM string converted","Coord Note":""},{"Lat":9.61708,"Long":-82.59925,"Date":"2006-08-31","Hour":"02:51","Group":1,"Species":"TT","Calve Presence":"Yes","Group Size":8,"Behavior":"Travel","Coord Correction":"Yes – Long sign fixed","Coord Note":""},{"Lat":9.584067,"Long":-82.5618,"Date":"2006-05-07","Hour":"12:34","Group":4,"Species":"SG","Calve Presence":"Unknown","Group Size":14,"Behavior":"Travel","Coord Correction":"Yes – DM string converted","Coord Note":""},{"Lat":9.599,"Long":-82.59615,"Date":"2006-06-05","Hour":"10:21","Group":3,"Species":"SG","Calve Presence":"Unknown","Group Size":4,"Behavior":"Travel","Coord Correction":"Yes – DM string converted","Coord Note":""},{"Lat":9.60695,"Long":-82.59046,"Date":"2006-09-03","Hour":"08:38","Group":1,"Species":"Mixed","Calve Presence":"Unknown","Group Size":9,"Behavior":"Travel","Coord Correction":"Yes – Long sign fixed","Coord Note":""},{"Lat":9.583467,"Long":-82.557817,"Date":"2006-06-07","Hour":"10:50","Group":3,"Species":"SG","Calve Presence":"No","Group Size":2,"Behavior":"unknown","Coord Correction":"Yes – DM string converted","Coord Note":""}];
+
+// ═══════════════════════════════════════════════════════════════
+// COLOUR DEFINITIONS
+// ═══════════════════════════════════════════════════════════════
+const SP_COLOR = {
+  SG:    { fill:'#3A9E6A', stroke:'#226644', label:'SG — Sotalia guianensis', n:57 },
+  TT:    { fill:'#D96030', stroke:'#A84018', label:'TT — Tursiops truncatus',  n:26 },
+  Mixed: { fill:'#8858A8', stroke:'#5A3480', label:'Mixed species',             n:31 },
+};
+
+const BH_COLOR = {
+  Foraging: { fill:'#C06820', label:'Foraging' },
+  Social:   { fill:'#A82458', label:'Social'   },
+  Travel:   { fill:'#2060B8', label:'Travel'   },
+  Resting:  { fill:'#209878', label:'Resting'  },
+  Diving:   { fill:'#3848B0', label:'Diving'   },
+  unknown:  { fill:'#7A7060', label:'Unknown'  },
+};
+
+const CV_COLOR = {
+  Yes:     { fill:'#A82458', label:'Yes'     },
+  No:      { fill:'#2060B8', label:'No'      },
+  Unknown: { fill:'#7A7060', label:'Unknown' },
+};
+
+// ═══════════════════════════════════════════════════════════════
+// FILTER STATE  (all on by default)
+// ═══════════════════════════════════════════════════════════════
+const active = {
+  sp: new Set(['SG','TT','Mixed']),
+  bh: new Set(['Foraging','Social','Travel','Resting','Diving','unknown']),
+  cv: new Set(['Yes','No','Unknown']),
+};
+
+function isVisible(d) {
+  return active.sp.has(d.Species) &&
+         active.bh.has(d.Behavior) &&
+         active.cv.has(d['Calve Presence']);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SIZE SCALE
+// ═══════════════════════════════════════════════════════════════
+function radius(gs) { return 5 + (gs - 2) / 38 * 17; }
+
+// ═══════════════════════════════════════════════════════════════
+// MAP INIT
+// ═══════════════════════════════════════════════════════════════
+const map = L.map('map', { zoomControl: false });
+L.control.zoom({ position: 'topright' }).addTo(map);
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+  subdomains: 'abcd', maxZoom: 19
+}).addTo(map);
+
+// Fit view to main cluster (exclude outlier)
+const main = DATA.filter(d => d.Lat > 9.5);
+map.fitBounds([
+  [Math.min(...main.map(d=>d.Lat))-0.012, Math.min(...main.map(d=>d.Long))-0.018],
+  [Math.max(...main.map(d=>d.Lat))+0.012, Math.max(...main.map(d=>d.Long))+0.018]
+]);
+
+// ═══════════════════════════════════════════════════════════════
+// MARKERS
+// ═══════════════════════════════════════════════════════════════
+let markers = [];
+
+function chip(fill, text) {
+  return `<span class="p-chip" style="background:${fill}1A;color:${fill};border:1px solid ${fill}44">${text}</span>`;
+}
+
+function makePopup(d) {
+  const sp = SP_COLOR[d.Species] || { fill:'#888' };
+  const bh = BH_COLOR[d.Behavior] || { fill:'#888' };
+  const cv = CV_COLOR[d['Calve Presence']] || { fill:'#888' };
+  const isOut = d.Lat < 9.5;
+  const hasCorr = d['Coord Correction'] !== 'No';
+  const hasWarn = d['Coord Note'] && d['Coord Note'].length > 0;
+  return `
+    <div class="p-bar" style="background:${sp.fill}"></div>
+    <div class="p-body">
+      <div class="p-title">${d.Species} · Group ${d.Group}</div>
+      <div class="p-sub">${d.Date} &nbsp;·&nbsp; ${d.Hour}</div>
+      <div class="p-grid">
+        <span class="p-k">Species</span>    <span class="p-v">${chip(sp.fill, d.Species)}</span>
+        <span class="p-k">Behavior</span>   <span class="p-v">${chip(bh.fill, d.Behavior)}</span>
+        <span class="p-k">Calves</span>     <span class="p-v">${chip(cv.fill, d['Calve Presence'])}</span>
+        <span class="p-k">Group size</span> <span class="p-v">${d['Group Size']} individuals</span>
+        <span class="p-k">Coords</span>     <span class="p-v">${d.Lat.toFixed(4)}, ${d.Long.toFixed(4)}</span>
+      </div>
+      ${hasCorr ? `<div class="p-sep"></div><div class="p-corr">✓ ${d['Coord Correction']}</div>` : ''}
+      ${hasWarn ? `<div class="p-warn">⚠ ${d['Coord Note']}</div>` : ''}
+    </div>`;
+}
+
+function renderMarkers() {
+  markers.forEach(m => map.removeLayer(m));
+  markers = [];
+
+  let visible = 0;
+  [...DATA].sort((a,b) => b['Group Size'] - a['Group Size']).forEach(d => {
+    const show = isVisible(d);
+    if (show) visible++;
+
+    const sp = SP_COLOR[d.Species] || { fill:'#888', stroke:'#555' };
+    const isOut = d.Lat < 9.5;
+    const r = radius(d['Group Size']);
+
+    const m = L.circleMarker([d.Lat, d.Long], {
+      radius: r,
+      fillColor:   isOut ? '#D4703A' : sp.fill,
+      color:       isOut ? '#9A4E22' : sp.stroke,
+      weight:      isOut ? 2 : 1.5,
+      fillOpacity: show ? (isOut ? 0.45 : 0.82) : 0,
+      opacity:     show ? 1 : 0,
+      interactive: show,
+    });
+
+    if (show) {
+      m.bindPopup(makePopup(d), { maxWidth: 265 });
+      m.on('mouseover', function() {
+        this.setStyle({ weight: 2.5, fillOpacity: isOut?0.6:0.95, color:'#26201A' });
+        this.bringToFront();
+      });
+      m.on('mouseout', function() {
+        this.setStyle({ weight: isOut?2:1.5, fillOpacity: isOut?0.45:0.82,
+                        color: isOut?'#9A4E22':sp.stroke });
+      });
+    }
+
+    m.addTo(map);
+    markers.push(m);
+  });
+
+  // update badge
+  document.getElementById('vis-badge').textContent = visible;
+  document.querySelector('.hdr-count span').textContent = `of ${DATA.length} sightings visible`;
+
+  // update legend counts
+  updateLegendCounts();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LEGEND
+// ═══════════════════════════════════════════════════════════════
+let legendCtrl = null;
+
+function buildLegend() {
+  if (legendCtrl) map.removeControl(legendCtrl);
+  legendCtrl = L.control({ position: 'bottomright' });
+  legendCtrl.onAdd = () => {
+    const div = L.DomUtil.create('div', 'lgd');
+    div.id = 'lgd-panel';
+
+    // Species
+    let h = `<div class="lgd-ttl">Species</div>`;
+    Object.entries(SP_COLOR).forEach(([k, v]) => {
+      h += `<div class="lgd-row">
+        <div class="lgd-dot" style="background:${v.fill};border-color:${v.stroke}"></div>
+        <span class="lgd-lbl">${v.label}</span>
+        <span class="lgd-n" id="lgd-sp-${k}">${v.n}</span>
+      </div>`;
+    });
+
+    // Size scale
+    h += `<div class="lgd-sep"></div>
+    <div class="lgd-ttl">Group size</div>
+    <div class="sz-row">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div class="sz-b" style="width:10px;height:10px"></div>
+        <span style="font-size:.59rem;color:#7A6E62">2</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div class="sz-b" style="width:18px;height:18px"></div>
+        <span style="font-size:.59rem;color:#7A6E62">15</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div class="sz-b" style="width:28px;height:28px"></div>
+        <span style="font-size:.59rem;color:#7A6E62">30</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div class="sz-b" style="width:38px;height:38px"></div>
+        <span style="font-size:.59rem;color:#7A6E62">40</span>
+      </div>
+      <span class="sz-note">individuals<br>per group</span>
+    </div>
+    <div class="lgd-sep"></div>
+    <div class="lgd-row" style="margin-bottom:0">
+      <div class="lgd-dot" style="background:#D4703A33;border:1.5px dashed #D4703A"></div>
+      <span class="lgd-lbl" style="font-size:.69rem;color:#7A6E62">Ambiguous coord (1)</span>
+    </div>`;
+
+    div.innerHTML = h;
+    L.DomEvent.disableClickPropagation(div);
+    L.DomEvent.disableScrollPropagation(div);
+    return div;
+  };
+  legendCtrl.addTo(map);
+}
+
+function updateLegendCounts() {
+  Object.keys(SP_COLOR).forEach(k => {
+    const el = document.getElementById(`lgd-sp-${k}`);
+    if (el) {
+      const n = DATA.filter(d => d.Species===k && isVisible(d)).length;
+      el.textContent = n;
+      el.style.color = n === 0 ? '#C8BFB0' : '#7A6E62';
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TOGGLE BUTTONS
+// ═══════════════════════════════════════════════════════════════
+function makeTog(container, key, label, fillColor, activeSet, groupKey) {
+  const btn = document.createElement('button');
+  btn.className = 'tog';
+  btn.dataset.key = key;
+  btn.dataset.group = groupKey;
+
+  // Style when ON
+  btn.style.background = fillColor + '18';
+  btn.style.borderColor = fillColor + '88';
+  btn.style.color = fillColor;
+
+  btn.innerHTML = `<div class="dot" style="background:${fillColor}"></div>${label}`;
+
+  // count badge
+  const total = DATA.filter(d => {
+    if (groupKey === 'sp') return d.Species === key;
+    if (groupKey === 'bh') return d.Behavior === key;
+    return d['Calve Presence'] === key;
+  }).length;
+
+  btn.innerHTML += ` <span style="font-size:.65rem;opacity:.6">${total}</span>`;
+
+  btn.addEventListener('click', () => {
+    if (activeSet.has(key)) {
+      activeSet.delete(key);
+      btn.classList.add('off');
+    } else {
+      activeSet.add(key);
+      btn.classList.remove('off');
+    }
+    renderMarkers();
+  });
+
+  container.appendChild(btn);
+}
+
+// Species toggles
+const spRow = document.getElementById('sp-row');
+Object.entries(SP_COLOR).forEach(([k, v]) =>
+  makeTog(spRow, k, v.label.split(' — ')[0], v.fill, active.sp, 'sp'));
+
+// Behavior toggles
+const bhRow = document.getElementById('bh-row');
+Object.entries(BH_COLOR).forEach(([k, v]) =>
+  makeTog(bhRow, k, v.label, v.fill, active.bh, 'bh'));
+
+// Calves toggles
+const cvRow = document.getElementById('cv-row');
+const cvLabels = { Yes:'With calves', No:'No calves', Unknown:'Unknown' };
+Object.entries(CV_COLOR).forEach(([k, v]) =>
+  makeTog(cvRow, k, cvLabels[k], v.fill, active.cv, 'cv'));
+
+// Reset button
+document.getElementById('resetBtn').addEventListener('click', () => {
+  ['SG','TT','Mixed'].forEach(k => active.sp.add(k));
+  ['Foraging','Social','Travel','Resting','Diving','unknown'].forEach(k => active.bh.add(k));
+  ['Yes','No','Unknown'].forEach(k => active.cv.add(k));
+  document.querySelectorAll('.tog').forEach(b => b.classList.remove('off'));
+  renderMarkers();
+});
+
+// ═══════════════════════════════════════════════════════════════
+// OUTLIER NOTE
+// ═══════════════════════════════════════════════════════════════
+const note = document.createElement('div');
+note.className = 'out-note';
+note.innerHTML = '⚠ 1 record (Mixed, 2003-08-17) sits south of the refuge — coordinate still ambiguous after correction';
+document.getElementById('map').appendChild(note);
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+buildLegend();
+renderMarkers();
+</script>
+
+
+</body></html>
